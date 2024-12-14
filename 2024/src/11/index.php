@@ -29,40 +29,49 @@ class Blink {
   use Helper;
 
   const MULTIPLIER = 2024;
+  const FIRST_RULE_KEY = 1;
 
   private $stones = [];
   private $data   = [];
 
   public function __construct($datafile = '') {
-    $this->stones = $this->processInput($datafile);
+    $data = $this->processInput($datafile);
+    $this->stones = $this->arrangeIntoKeys($data);
+  }
+
+  private function arrangeIntoKeys($data = []) : array {
+    $keys = [];
+    foreach ($data as $stone) {
+      $keys = $this->update($stone, $keys, 1);
+    }
+
+    return $keys;
   }
 
   public function getStones() : array {
     return $this->stones;
-  }
+  }  
 
-  public function blink(&$stones = [], $count = 0) : array {
+  public function blink(&$stones = [], $count = 0) : array {    
+
     $data = [];
-
-    foreach ($stones as $stone) {
-      if ($stone == 0) {
-        $stone = 1;
-        $data[] = $stone;
-      } elseif (strlen($stone) %2 == 0) {
-        $split = str_split($stone);
+    foreach ($stones as $id => $increment) {
+      if ($id == 0) {
+        $data = $this->update(self::FIRST_RULE_KEY, $data, $increment);
+      } elseif (strlen($id) %2 == 0) {
+        $split = str_split($id);
         $index = count($split) / 2;
 
         $left_stone  = intval(join('', array_slice($split, 0, $index)));
         $right_stone = intval(join('', array_slice($split, $index)));
 
-        $data[] = $left_stone;
-        $data[] = $right_stone;
+        $data = $this->update($left_stone, $data, $increment);
+        $data = $this->update($right_stone, $data, $increment);
       } else {
-        $data[] = $stone * self::MULTIPLIER;
+        $new_key = $id * self::MULTIPLIER;
+        $data = $this->update($new_key, $data, $increment);
       }
     }
-
-    // print $this->showWork($data, true);
 
     if ($count > 1) {
       $data = $this->blink($data, --$count);
@@ -71,23 +80,25 @@ class Blink {
     return $data;
   }
 
-  public function count() : int {
-    $count = 0;
+  public function update($id, $data, $increment) : array {
+    if (!array_key_exists($id, $data)) {
+      $data[$id] = 0;
+    }
 
-    return $count;
+    $data[$id] += $increment;
+
+    return $data;
   }
 }
 
 
 // -------------------------------------------------------
 // Main
-
 $blink = new Blink('input.txt');
 $stones = $blink->getStones();
 
-$stones = $blink->blink($stones, 25);
-print '<p>Q1: The answer is ' . count($stones) . '</p>';
+$data = $blink->blink($stones, 25);
+print '<p>Q1: The answer is ' . array_sum($data) . '</p>';
 
-// doesn't work - have to redo my code
-// $stones = $blink->blink($stones, 75);
-// print '<p>Q2: The answer is ' . count($stones) . '</p>';
+$data = $blink->blink($stones, 75);
+print '<p>Q2: The answer is ' . array_sum($data) . '</p>';
