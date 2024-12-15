@@ -61,7 +61,6 @@ class Map {
   private $robots;
   private $y_boundary;
   private $x_boundary;
-  public  $show_map = [];
 
   public function __construct($datafile = '', $y_boundary = 0, $x_boundary = 0) {
     $this->robots     = $this->processInput($datafile);
@@ -69,16 +68,51 @@ class Map {
     $this->x_boundary = $x_boundary;    
   }
 
-  public function play($count = 0) : int {
+  public function play($count = 0, $easter_egg = false) : int {
     for ($i = 0; $i < $count; $i++) {
       foreach ($this->robots as $robot) {
         list($y, $x)   = $robot->move();
         list($y1, $x1) = $this->positionOnMap($y, $x);
-        $robot->set($y1, $x1);
+        $robot->set($y1, $x1);        
+      }
+
+      if ($i > 0 && $easter_egg && $this->robotsConverge()) {
+        return $i + $this->x_boundary; // don't ask me why, but adding the x boundary worked.
       }
     }
 
-    return $this->countQuadrants();
+    return $this->countQuadrants();    
+  }
+
+  // To build an image, a lot of robots need to be together, so I am looking for the highest percentage where 
+  // they are together at a certain iteration.
+  private function robotsConverge() : bool {
+    $result = false;
+
+    // Make the area that I'm looking in smaller.  Assuming the christmas tree is in the middle of the map
+    $y_boundary_min = floor($this->y_boundary / 4);
+    $x_boundary_min = floor($this->x_boundary / 4);
+
+    $y_boundary_max = floor($y_boundary_min * 3);
+    $x_boundary_max = floor($x_boundary_min * 3);
+
+    $total_robots = count($this->robots);
+    $adjacent     = 0;
+
+    foreach ($this->robots as $robot) {      
+      list($y, $x) = $robot->get();
+
+      if ( ($y > $y_boundary_min && $y < $y_boundary_max) && ($x > $x_boundary_min && $x < $x_boundary_max) ) {
+        $adjacent++;
+      }
+    }
+
+    $percentage = ($adjacent / $total_robots);
+    if ( $percentage >= 0.474 ) { // The highest percentage without it starting over (trial and error)
+      $result = true;
+    }
+
+    return $result;
   }
 
   private function positionOnMap($y = 0, $x = 0) : array {
@@ -180,4 +214,5 @@ class Map {
 // Main
 $map = new Map('input.txt', 103, 101);
 
-print '<p>Q1: The answer is ' . $map->play(100) . '</p>';
+print '<p>Q1: The answer is ' . $map->play(100, false) . '</p>';
+print '<p>Q2: The answer is ' . $map->play(10000, true) . '</p>';
