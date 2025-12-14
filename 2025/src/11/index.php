@@ -55,18 +55,12 @@ $end   = 'out';
 $paths = countPaths($devices, $start, $end);
 print '<p>The total number of paths are ' . $paths . '</p>';
 
-$paths = 0;
+$paths = 1;
+$start = ['svr', 'fft', 'dac'];
+$end   = ['fft', 'dac', 'out'];
 
-$start = ['svr'];
-$end   = ['dac', 'fft'];
-foreach ($end as $output) {
- $paths += countPaths($devices, $start[0], $output);
+for ($i = 0; $i < count($start); $i++) {
+  $paths *= countPaths($devices, $start[$i], $end[$i]);
 }
-
-$start = ['svr', 'dac', 'fft'];
-$end   = ['dac', 'fft', 'out'];
-
-$paths = countPaths($devices, $start[0], $end[0]) * countPaths($devices, $start[1], $end[1]) * countPaths($devices, $start[2], $end[2]) + 
-         countPaths($devices, $start[0], $end[1]) * countPaths($devices, $start[2], $end[0]) * countPaths($devices, $start[1], $end[2]);
 
 print '<p>The total number of paths with dac and fft in them are ' . $paths . '</p>';
